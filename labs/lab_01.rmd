@@ -58,6 +58,7 @@ umd_courses %>%
   group_by(department, title) %>% 
   summarize (count_classes = n()) %>% 
   arrange(desc(count_classes)) 
+#still didn't work, next time use group_by(id)
 ```
 
 **Q3** Count the number of courses for each instructor and department. Which instructor has taught the most?
@@ -70,7 +71,7 @@ umd_courses %>%
   arrange(desc(count_instructors)) 
 ```
 
-**Q4** Given the results for Q3, what would have made it easier to find the answer? You don't have to know *how* to accomplish this; I want you to describe in words what would make the answer easier to see. How confident are you that the answer you got is the right one, and why? 
+**Q4** Given the results for Q3, what would have made it easier to find the answer? You don't have to know *how* to accomplish this; I want you to describe in words what would make the answer easier to see. How confident are you that the answer you got is the right one, and why?
 
 **A4: If you could filter all of the entries by ones that have a value for "Instructors," that would be very helpful. I am also wondering whether a department has professors of the same name, but that's probably unlikely. I'm not super confident because since so many N/A entries top the list, that means there is a lot of missing data that could skew these results.**
 
