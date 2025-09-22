@@ -27,9 +27,82 @@ The command to set a working directory is setwd(). For example, this sets the wo
 setwd("~/jour472/data_journalism_2024_fall")
 ```
 
-### How to install and load the tidyverse
+### How to install and load the tidyverse or another library/package
 
 ```{r}
 install.packages("tidyverse")
 library(tidyverse)
 ```
+
+### How to assign something to a variable
+```{r}
+number <- 2
+number * number
+```
+###How to load in different types of data files
+```{r}
+#choose_file_name <- read_insertfiletypehere("insertfilenamehere")
+umd_courses <- read_rds("umd_courses.rds")
+```
+
+###How to glimpse data
+```{r}
+glimpse(umd_courses)
+#gives a little glimpse at the data so you can get a feel for it
+head (umd_courses)
+#gives a glimpse at the first 6 rows of data
+```
+###What is %>% or |>
+```{r}
+#use ctrl+shift+m to add the figure
+#it essentially means "and then do this"
+#here's an example
+umd_courses |>
+  group_by(term) |>
+  summarise(
+    count_classes = n()
+  )
+```
+
+###How to use GROUP_BY, SUMMARISE and ARRANGE
+```{r}
+#You can do this to group the data and summarize it in a table
+umd_courses |>
+  group_by(term) |>
+  summarise(
+    count_classes = n())
+
+#or you can do this to take all of that and arrange it in a specific way
+
+umd_courses |>
+  group_by(term) |>
+  summarise(
+    count_classes = n()
+  ) |>
+  arrange(desc(count_classes))
+
+#you can also group by multiple columns, this makes it so that table shows how many classes each department had each term.
+umd_courses |>
+  group_by(term, department) |>
+  summarise(
+    count_classes = n()
+  ) |>
+  arrange(term, department)
+
+#you can also add more data to the summary like this
+umd_courses |>
+  group_by(term) |>
+  summarise(
+    count_classes = n(),
+    total_seats = sum(seats))
+
+#you can even add summarized data that isn't a count like means or medians
+umd_courses |>
+  group_by(term) |>
+  summarise(
+    count_classes = n(),
+    total_seats = sum(seats),
+    mean_seats = mean(seats),
+    median_seats = median(seats))
+```
+
