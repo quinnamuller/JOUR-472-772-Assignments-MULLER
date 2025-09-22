@@ -12,7 +12,7 @@ options(scipen=999)
 
 ## About this notebook
 
-This notebook contains code and explanatory text that your should review and run as you read through chapters 8 and 10 of the course textbook, "Data Journalism with R and the Tidyverse". Answer questions and edit the document as directed.
+This notebook contains code and explanatory text that your should review and run as you read through chapters 13 and 15 of the course textbook, "Data Journalism with R and the Tidyverse". Answer questions and edit the document as directed.
 
 Running this notebook will help you understand key data analysis methods and concepts that you will put into practice during this week's lab. When you come across a new command or verb in R, you should add it to your class reference notebook file along with what it's used for.
 
@@ -30,14 +30,16 @@ The library function loads an R library such as the tidyverse, providing access 
 
 -   Load this notebook, and provide overview of R, RStudio (text editor, console, environment window, file explorer), Rmarkdown data notebooks, the reference notebook.
 -   Work through the code below, chapter by chapter.
-    -   Chapter 8: explain the console and the concept of variables. Explain packages, the Tidyverse, how to install them.
-    -   Chapter 10: explain loading libraries, the concept of functions, loading data, the importance of having questions to guide data analysis, and aggregation and summarization.
+    -   Chapter 13: explain the console and the concept of variables. Explain packages, the Tidyverse, how to install them.
+    -   Chapter 15: explain loading libraries, the concept of functions, loading data, the importance of having questions to guide data analysis, and aggregation and summarization.
 
-## Chapter 8
+## Chapter 13
 
 ### Task 1: The console
 
-**Task** In the console (look below), type 2+2 and hit enter. What does it return? Type your answer below. **Answer:**
+**Task** In the console (look below), type 2+2 and hit enter. What does it return? Type your answer below. 
+
+**Answer: 4**
 
 ### Task 2: Variables
 
@@ -55,7 +57,7 @@ number * number
 
 What does it return? Type your answer below:
 
-**Answer:**
+**Answer:4**
 
 ### Task 3: Install packages
 
@@ -83,7 +85,7 @@ install.packages('rmarkdown')
 library(tidyverse)
 ```
 
-## Chapter 10
+## Chapter 15
 
 ### Task 5: Load data
 
@@ -95,7 +97,7 @@ umd_courses <- read_rds("umd_courses.rds")
 
 Once it loads, look at the environment window at right in RStudio for umd_courses It's next to a small blue circle with a white arrow in it. To the right of that, look at how many "obs" the dataset has ("obs" is short for observation, which is another way of saying rows or records). Look at how many variables it has (another way of saying columns or fields). Write the number of observations and variables below.
 
-**Answer**
+**Answer: 79366**
 
 ### Task 6: Glimpse data
 
@@ -105,7 +107,7 @@ Once it loads, look at the environment window at right in RStudio for umd_course
 glimpse(umd_courses)
 ```
 
-In the space below, write the data type for the "id" column and the "seats" column (it's in light gray, offset by \< \>). **Answer**
+In the space below, write the data type for the "id" column and the "seats" column (it's in light gray, offset by \< \>). **Answer: <chr> and <dbl>**
 
 ### Task 7: Examine data "head"
 
@@ -115,7 +117,9 @@ In the space below, write the data type for the "id" column and the "seats" colu
 head(umd_courses)
 ```
 
-In the space below, write the name of the business from the first row of the "name" column. **Answer**
+In the space below, write the name of the business [course?] from the first row of the "name" ["title"?] column. 
+
+**Answer: Directed Research**
 
 ### Task 8: Explore data with interactive dataframe
 
@@ -139,7 +143,7 @@ umd_courses |>
 
 Describe what you think each line of this code is doing below, based on the result:
 
-**Answer**
+**Answer: 1) assigning the actions to the umd_courses dataset, 2) grouping the data by term 3) creating a summary of the data that includes 4) a count of the classes from each of the categories created in the second line**
 
 ### Task 10: Adding arrange to sort the data
 
@@ -154,7 +158,9 @@ umd_courses |>
   arrange(desc(count_classes))
 ```
 
-Compared to the previous codeblock, what has changed and how did that affect the result? **Answer**
+Compared to the previous codeblock, what has changed and how did that affect the result? 
+
+**Answer: It arranged the count of courses for each semester in descending order. Now, the semesters that have historically had the most classes are listed at the top. **
 
 ### Task 11: Grouping by multiple columns
 
@@ -171,7 +177,7 @@ umd_courses |>
 
 Compared to the previous codeblock, how did the output change and what in the code changed it?
 
-**Answer**
+**Answer: There is an additional column name in the parentheses after the "group_by" function. This makes it so that table shows how many classes each department had each term.**
 
 ### Task 12: Other summary functions
 
@@ -187,7 +193,9 @@ umd_courses |>
   arrange(desc(total_seats))
 ```
 
-Compared to the previous codeblock, what has changed and how did that affect the result? **Answer**
+Compared to the previous codeblock, what has changed and how did that affect the result? 
+
+**Answer: This summary makes it so that the data is grouped by term to show the total number of seats and classes for every term. It then sorts all of this data from the term with the most total seats to the least.**
 
 ### Task 13: different kinds of summarizations
 
@@ -205,7 +213,7 @@ umd_courses |>
   arrange(desc(total_seats))
 ```
 
-Compared to the previous codeblock, what has changed and how did that affect the result? What do the top terms have in common? **Answer**
+Compared to the previous codeblock, what has changed and how did that affect the result? What do the top terms have in common? **Answer: The summary now also includes the mean and median number of seats for a class each semester. The top terms are almost entirely fall semesters.**
 
 ### Task 14: more aggregations
 
@@ -219,15 +227,14 @@ umd_courses |>
     total_seats = sum(seats),
     mean_seats = mean(seats),
     median_seats = median(seats),
-    # add minimum seats here
-    # add maximum seats here
-  ) |>
+    minimum_seats = min(seats),
+    maximum_seats = max(seats))|>
   arrange(desc(total_seats))
 ```
 
 Compared to the previous codeblock, what has changed and how did that affect the result? How is the data sorted?
 
-**Answer**
+**Answer: The data is now sorted by department, so all of the  counts are the number of classes each department has had each term from Winter 2017 to Summer 2025. There were also two columns added for the minimum and maximum number of seats a class within the department had over this eight year period. The data is sorted in descending order by the total number of seats each department had over these eight years.**
 
 ### Task 12: Questions
 
@@ -235,8 +242,8 @@ No code here; I want you to provide three questions that this data suggests to y
 
 **Answer**
 
-1.  
+1.  Which departments support the greatest amount of students? The least?
 
-2.  
+2.  Are there any professors that students are taking significantly more than others for the same courses? Or professors who are teaching more sections of the same classes?
 
-3.  
+3.  Can we use this data to track patterns in enrollment? Or enrollment in certain majors/fields/programs?
