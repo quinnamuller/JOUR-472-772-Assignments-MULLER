@@ -1,0 +1,92 @@
+---
+title: "lab_01"
+author: "Derek Willis"
+date: "2025-01-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# Turn off scientific notation
+options(scipen=999)
+```
+
+## About this lab
+
+To complete this lab, you need to: \* run existing code as directed (look for **Task**). \* modify existing code as directed (look for **Task**). \* write code in empty codeblocks provided to answer questions included (look for **Q**). \* write out the answer in the form of a complete sentence in the space given (look for **A**). When you are finished, commit changes and push to your personal GitHub repo, then submit the URL to this document on ELMS.
+
+Remember to add any new verbs or concepts to your class reference notebook!
+
+## Load libraries and establish settings
+
+**Task** Run the codeblock below to load the Tidyverse. To run the codeblock, hit the little green play button in the upper right corner of the gray area (the codeblock) below.
+
+```{r}
+# Load the tidyverse. If you have not installed the tidyverse already, remove the # from the next line and run it first.  
+# install.packages('tidyverse')
+library(tidyverse)
+```
+
+## Load Data
+
+We're going to load the UMD courses data.
+
+**Task** Run the codeblock below to load the data, which is contained in an RDS file.
+
+```{r}
+umd_courses <- read_rds("lab_01.rds")
+```
+
+## Answer questions
+
+**Q1** Which department has the highest mean (average) number of seats for its classes? You need to show the department with the highest average first. Which one is the most surprising/interesting to you? 
+
+**A1: The Department of Computer, Math, and Natural Sciences has the highest mean number of seats for its classes. This is very interesting because if you sort the original dataset in descending order by seats, the two courses that consistently have the most seats are in the University Courses and Engineering Science departments. I also was surprised by the median number of seats for FIRE classes just because I didn't know how big the program was.**
+
+```{r}
+umd_courses %>% 
+  group_by(department) %>% 
+  summarize (mean_seats = mean(seats)) %>%
+  arrange(desc(mean_seats))             
+```
+
+**Q2** Find out the greatest number of times any individual class has been offered in our dataset. Your code must show the greatest number of classes first.
+**A2: The greatest number of times a course has been offered is 94 times; the course is Directed Graduate Studies in Studio Art. Originally, I got a number over 1,000 and then I realized that some departments have courses with the same name.**
+
+```{r}
+umd_courses %>% 
+  group_by(department, title) %>% 
+  summarize (count_classes = n()) %>% 
+  arrange(desc(count_classes)) 
+```
+
+**Q3** Count the number of courses for each instructor and department. Which instructor has taught the most?
+**A3: Keith Yearwood has taught the most: 79 courses for the Department of Geographical Sciences.**
+
+```{r}
+umd_courses %>% 
+  group_by(department, instructors) %>% 
+  summarize (count_instructors = n()) %>% 
+  arrange(desc(count_instructors)) 
+```
+
+**Q4** Given the results for Q3, what would have made it easier to find the answer? You don't have to know *how* to accomplish this; I want you to describe in words what would make the answer easier to see. How confident are you that the answer you got is the right one, and why? 
+
+**A4: If you could filter all of the entries by ones that have a value for "Instructors," that would be very helpful. I am also wondering whether a department has professors of the same name, but that's probably unlikely. I'm not super confident because since so many N/A entries top the list, that means there is a lot of missing data that could skew these results.**
+
+**Q5** Take one of the questions you listed in the final question of the pre_lab and try to answer it here in code. If you don't know how to fully answer it, write what code you can and describe in words what else you would need to do. If you got an answer, is it interesting? 
+
+**A5: 
+#Here was the question: Can we use this data to track patterns in enrollment? Or enrollment in certain majors/fields/programs? 
+#I would have to track this individually for each program because there are so many of them. It would be nice if the college was provided also in addition to the department since that would be much easier to track. 
+#I'm seeing like a chart in my head tracing the enrollment of each college at UMD over the past eight years and having it measured up to the total enrollment numbers. Right now, I'll just look at the number of seats offered by the Journalism school over the years. 
+#The data shows that we have very busy fall semesters in terms of who is in and out of Knight Hall and very sparse winter semesters. 
+#I'm also wondering how you would be able to filter by all the spring semesters or all the fall semesters with how the terms are written. Would that be something janitor could fix?**
+
+```{r}
+umd_courses %>% 
+  group_by(term, department) %>% 
+  summarize (total_seats = sum(seats)) %>% 
+  filter(department =="Journalism") %>% 
+  arrange(desc(total_seats))
+```
