@@ -32,23 +32,71 @@ maryland_expenses <- read_csv("data/maryland_expenses.csv")
 
 ## Answer questions
 
-**Q1.** How many departments have offered the courses with "Climate" in the title and at least one seat? Which department has offered the most? **A1.**
+**Q1.** How many departments have offered the courses with "Climate" in the title and at least one seat? Which department has offered the most?
+
+**A1: 32 departments have offered "Climate" courses with at least one seat. The department of Atmospheric and Oceanic Sciences has offered 93 "Climate" courses with at least one seat over the past 8 years.**
 
 ```{r}
+climate_gt_one <- umd_courses |>
+  filter(str_detect(title, "Climate") & seats >= 1)
 ```
 
-**Q2.** Of the departments listed in A1, which one is the most interesting to you, and why? **A2.**
+```{r}
+dept_climate_plusone <- climate_gt_one |>
+  group_by(department) |>
+  summarise(
+    count_dept = n()
+  ) %>% 
+  arrange(desc(count_dept))
+
+nrow(dept_climate_plusone)
+```
+
+**Q2.** Of the departments listed in A1, which one is the most interesting to you, and why? 
+
+**A2: I think having climate classes in the German Studies department is very random. The same goes for the finance and art history departments. I'm trying to figure out how they would possibly relate climate as such a big concept for an entire course related to finance, art history, or German.**
 
 **Q3** Which departments offered the most courses in the Fall 2024 term? And which departments in that term have at least one syllabus posted? Answer both of those questions and then compare the top five departments - how are they different?
 
-**A3.**
+**A3: The Business and Management department offered the most courses in the Fall 2024 term with 174 courses offered. The top five departments with the most F24 courses are Business and Management, School of Music, Information Studies, English, and Teaching and Learning, Policy and Leadership. The top five departments with the most F24 courses with a syllabus are Business and Management, Economics, the School of Music, Information Studies, and Engineering, Professional Masters. I think Business and Management tops both lists just because of the sheer number of courses it offers. They're I guess more consistent with uploading to the syllabus repositories than some of the other departments. The count of courses that offer syllabuses on Testudo drops significantly, almsot by 2/3 of most of the course counts for F24. Economics popping up on the syllabus top 5 probably just shows consistency in their courses uploading syllabuses to Testudo.**
 
 ```{r}
+f24_courses <- umd_courses |>
+  filter(str_detect(term, "202408"))
+
+f24_courses |>
+  group_by(department) |>
+  summarise(
+    count_classes = n()
+  ) |>
+  arrange(desc(count_classes))
 ```
 
-**Q4.** Using the Maryland campaign expenses data, change the datatype of the expenditure_date column so that it is a date and not a chr, saving the result as a new dataframe. Then create a new column for the month based on expenditure_date. Then write code that shows total amount spent each month by Wes Moore's committee (you'll need to search the data to find the exact name, and we're not looking in payee_name). Write a sentence describing the pattern of spending over time. **A4.**
+```{r}
+f24_courses_w_syllabus <- f24_courses |>
+  filter(syllabus_count >= 1)
+
+f24_courses_w_syllabus |>
+  group_by(department) |>
+  summarise(
+    count_dept = n()
+  ) |>
+  arrange(desc(count_dept))
+```
+
+**Q4.** Using the Maryland campaign expenses data, change the datatype of the expenditure_date column so that it is a date and not a chr, saving the result as a new dataframe. Then create a new column for the month based on expenditure_date. Then write code that shows total amount spent each month by Wes Moore's committee (you'll need to search the data to find the exact name, and we're not looking in payee_name). Write a sentence describing the pattern of spending over time. 
+
+**A4: The expenditures balloon up to June 2022 and then get very weird and drop before exploding past $3 million in October 2022. Considering Wes Moore was voted Governor of Maryland in November 2022, it makes sense that this huge expenditure was spent right before the election. The months closest to the election largely had the most campaign spending.**
 
 ```{r}
+md_expenses <- maryland_expenses %>% mutate(expenditure_date=mdy(expenditure_date)) %>% 
+mutate(month = floor_date(expenditure_date, "month"))
+
+moore_committee_expenses <- md_expenses |>
+  filter (committee_name == "Moore  Wes For Maryland") %>% 
+  group_by(month) |>
+  summarise(total_amount = sum(amount)) |>
+  arrange((month))
 ```
 
 **Q5.** Using case_when(), create a column in the Maryland expenses data called `spending_location` indicating whether each record spent money in Maryland or outside Maryland. For records that are in Maryland, make the new column's value "In-state" and for all others, make it "Out of state". Then write code that shows the total amount of money spent in each category and describe the results. You can do this in one statement or break it up into two statements (saving the new column to your dataframe). **A5**
