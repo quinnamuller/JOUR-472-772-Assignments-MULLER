@@ -52,6 +52,7 @@ glimpse(umd_courses)
 head (umd_courses)
 #gives a glimpse at the first 6 rows of data
 ```
+
 ###What is %>% or |>
 ```{r}
 #use ctrl+shift+m to add the figure
