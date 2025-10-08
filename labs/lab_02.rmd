@@ -99,12 +99,43 @@ moore_committee_expenses <- md_expenses |>
   arrange((month))
 ```
 
-**Q5.** Using case_when(), create a column in the Maryland expenses data called `spending_location` indicating whether each record spent money in Maryland or outside Maryland. For records that are in Maryland, make the new column's value "In-state" and for all others, make it "Out of state". Then write code that shows the total amount of money spent in each category and describe the results. You can do this in one statement or break it up into two statements (saving the new column to your dataframe). **A5**
+**Q5.** Using case_when(), create a column in the Maryland expenses data called `spending_location` indicating whether each record spent money in Maryland or outside Maryland. For records that are in Maryland, make the new column's value "In-state" and for all others, make it "Out of state". Then write code that shows the total amount of money spent in each category and describe the results. You can do this in one statement or break it up into two statements (saving the new column to your dataframe). 
+
+**A5: The total in-state expenses is $77,723,146. I'm not sure why the out of state expenses isn't showing up.**
 
 ```{r}
+md_expenses <- md_expenses |>
+  mutate(
+    spending_location = case_when(
+        str_detect(address, " Maryland ") ~ "In-state",
+        .default = "Out of state"
+      )
+  )
+
+md_expenses |>
+  group_by(spending_location) |>
+  summarise(total_amount = sum(amount)) |>
+  arrange(total_amount)
 ```
 
-**Q6.** Choose your own adventure: using either the UMD courses or campaign expenses data, ask and answer a question that is different than the previous ones. You can use one of the ones you provided in the pre_lab. **A6.**
+**Q6.** Choose your own adventure: using either the UMD courses or campaign expenses data, ask and answer a question that is different than the previous ones. You can use one of the ones you provided in the pre_lab. 
+
+**A6: Question: How much money is Washington vs Washington, D.C. receiving from the state of Maryland? ... Entities in the state of Washington have received $1,014,519 from the state of Maryland whereas entities in Washington D.C. have received $15,053,932.**
 
 ```{r}
+washington_expenses <- md_expenses %>% 
+  filter(str_detect(address, " Washington "))
+
+washington_expenses <- washington_expenses |>
+  mutate(
+    which_washington = case_when(
+        str_detect(address, " Washington  District Of Columbia ") ~ "Washington, D.C.",
+        .default = "State of Washington"
+      )
+  )
+
+washington_expenses |>
+  group_by(which_washington) |>
+  summarise(total_amount = sum(amount)) |>
+  arrange(total_amount)
 ```
