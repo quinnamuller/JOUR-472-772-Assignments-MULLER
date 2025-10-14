@@ -10,9 +10,8 @@ output: html_document
 Let's load the necessary libraries and, using your API key, setup your credentials:
 
 ```{r}
-install.packages(axolotr)
 library(axolotr)
-create_credentials(GROQ_API_KEY = "YOUR API KEY HERE")
+create_credentials(GROQ_API_KEY = "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")
 ```
 
 See that "Please restart your R session for changes to take effect."? Go ahead and do that; you'll need to rerun the `library()` function for axolotr, and let's load tidyverse while we're at it.\
@@ -35,7 +34,7 @@ groq_response <- axolotr::ask(
 groq_response
 ```
 
-Did that work?
+Did that work? Yes
 
 ## Q1. Turning unstructured information into data: let's take [this article](https://www.nytimes.com/2024/09/27/arts/maggie-smith-dead.html) about the death of Dame Maggie Smith and try to extract information from it. Your goal is to have Groq create a table with the films and TV shows mentioned in this news article, and extract the following information about them: title, year, role, director, co-stars, and awards. From the table that it created, answer this: is the information correct? Did all information come from the article text?
 
@@ -70,10 +69,18 @@ McGonagall, wearing high-necked Victorian-style gowns, a distinctive Scottish br
 
 ```{r}
 #Add code below to talk to Groq and display its response
+maggie_smith <- axolotr::ask(
+  prompt = paste("Given the following text, extract information into a CSV file with the following structure, including headers, with no yapping: title,year,role,director,co-stars,award", text),
+  model = "llama-3.1-8b-instant"
+)
+
+maggie_smith
+
+df_maggie_smith <- read_csv(maggie_smith)
 
 ```
 
-**Answer:**
+**Answer: A lot of the information is correct, but a lot of it isn't. Since the table uses comma-separated values, it put a comma list of her co-stars in the awards category. None of the directors were mentioned in the Times article, as well as most of the co-stars who are listed. Some of the names of her roles within specific movies were also not mentioned but somehow made it into the table. Groq also only lists two of the Harry Potter movies because they are the only ones explicitly mentioned despite the article clarifying that she was in 7 out of 8 of the movies.**
 
 ------------------------------------------------------------------------
 
@@ -90,10 +97,19 @@ r_code_example = 'umd_courses |>
 
 ```{r}
 #Add code below to talk to Groq and display its response
+code_explanation <- axolotr::ask(
+  prompt = paste("Explain what the following code does with the umd_courses dataframe: 'umd_courses |> 
+                 filter(str_detect(title, \"Climate\") & seats > 0) |>
+                 group_by(department) |> 
+                 summarize(classes = n()) |>
+                 arrange(desc(classes))'"),
+  model = "llama-3.1-8b-instant"
+)
 
+code_explanation
 ```
 
-**Answer:**
+**Answer: Yes, the answer is correct. However it says, "So, the final output will be a dataframe with the department names and the number of classes related to \"Climate\" in each department, sorted in descending order by the number of classes." It forgets that it's the number of classes related to Climate with more than one seat. **
 
 ------------------------------------------------------------------------
 
@@ -101,25 +117,55 @@ r_code_example = 'umd_courses |>
 
 ```{r}
 #Loading lab question
-lab_question = 'Using case_when(), create a column in the Maryland expenses data called spending_location indicating whether each record indicated money spent in Maryland or outside Maryland, based on the address column of the \'maryland_expenses\' dataset. For records that are in Maryland, make the new column\'s value \"In-state\" and for the others, make it \"Out of state\". Then write code that shows the total amount of money spent in each category and describe the results. You can do this in one statement or break it up into two statements (saving the new column to your dataframe).'
-
+lab_question = 'How much money is Washington vs Washington, D.C. receiving from the state of Maryland?'
 
 #Paste the code block here, between the quotes. If your code has quotes or single quotes, you have to add a \ before each one so R doesn't break.
 
-your_r_code_lab = "
+your_r_code_lab = "washington_expenses <- md_expenses %>% 
+  filter(str_detect(address, \" Washington \"))
 
+washington_expenses <- washington_expenses |>
+  mutate(
+    which_washington = case_when(
+        str_detect(address, \" Washington  District Of Columbia \") ~ \"Washington, D.C.\",
+        .default = \"State of Washington\"
+      )
+  )
 
+washington_expenses |>
+  group_by(which_washington) |>
+  summarise(total_amount = sum(amount)) |>
+  arrange(total_amount)
 "
-
-
 ```
 
 ```{r}
 #Add code below to talk to Groq and display its response
 
+lab2_code_verification <- axolotr::ask(
+  prompt = paste("I have a dataframe with all of the money that Maryland is paying to various entities and each entity has column with it's respective address. I want to find the total amount of money being that Maryland paid to the State of Washington versus Washington, D.C.? Would the following code work?:
+
+washington_expenses <- md_expenses %>% 
+  filter(str_detect(address, \" Washington \"))
+
+washington_expenses <- washington_expenses |>
+  mutate(
+    which_washington = case_when(
+        str_detect(address, \" Washington  District Of Columbia \") ~ \"Washington, D.C.\",
+        .default = \"State of Washington\"
+      )
+  )
+
+washington_expenses |>
+  group_by(which_washington) |>
+  summarise(total_amount = sum(amount)) |>
+  arrange(total_amount)"))
+
+lab2_code_verification
 ```
 
-**Answer:**
+**Answer:I keep getting an error with my API key that I can't seem to figure out. It's working up top with all of the other stuff but I keep getting this error: "Error in ask_anthropic(prompt = prompt, system = system, model = model) :
+Please set the ANTHROPIC_API_KEY environment variable". I looked up how to fix it and I couldn't find anything helpful.**
 
 ------------------------------------------------------------------------
 
@@ -127,18 +173,24 @@ your_r_code_lab = "
 
 ```{r}
 #Add code below to talk to Groq and display its response
-
+data_analysis_ideas <- axolotr::ask(
+  prompt = paste("I have a dataframe of reported car crashes in the state of Maryland. The column names are as follows:jurisdiction,report_type,date,hit_run,direction,at_fault,weather,surface_condition,light,dui. What are some news stories that could come out of this?" 
+  )
+  )
 ```
 
-**Answer:**
-
+**Answer:I keep getting an error with my API key that I can't seem to figure out. It's working up top with all of the other stuff but I keep getting this error: "Error in ask_anthropic(prompt = prompt, system = system, model = model) :
+Please set the ANTHROPIC_API_KEY environment variable". I looked up how to fix it and I couldn't find anything helpful.**
 ------------------------------------------------------------------------
 
 ## Q5. Using AI to write news articles: ask Groq to write a 500-word news article about a car crash at the intersection between Knox Road and Regents Drive. What issues or problems do you see with the output?
 
 ```{r}
 #Add code below to talk to Groq and display its response
-
+car_crash_article <- axolotr::ask(
+  prompt = paste("Write a 500-word news article about a car crash at the intersection between Knox Road and Regents Drive.")
+  )
 ```
 
-**Answer:**
+**Answer: I keep getting an error with my API key that I can't seem to figure out. It's working up top with all of the other stuff but I keep getting this error: "Error in ask_anthropic(prompt = prompt, system = system, model = model) :
+Please set the ANTHROPIC_API_KEY environment variable". I looked up how to fix it and I couldn't find anything helpful.**
