@@ -1,0 +1,164 @@
+---
+title: "Reverse Engineering Project: Donations from Sports Administrators"
+author: "Isabella, Dylan, Quinn"
+date: "10.29.2025"
+output:
+  html_document:
+    theme: cerulean
+    highlight: pygments
+    toc: true
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction 
+
+In this notebook, we are reverse engineering the story, [Inside The Political Donation History Of Wealthy Sports Owners](https://fivethirtyeight.com/features/inside-the-political-donation-history-of-wealthy-sports-owners/)
+
+## Load libraries
+
+Loading required libraries for this analysis.
+
+```{r echo=FALSE, message=FALSE}
+library(tidyverse)
+library(lubridate)
+library(janitor)
+```
+
+## Load and Cleaning Data
+
+In this section, describe the source of the data, write a basic data dictionary for data you are working with, and discuss any caveats or issues you discovered working with this data. 
+
+```{r}
+# Load required data
+
+sports_donations <- read.csv("data/sports-political-donations.csv") %>% clean_names()
+
+# Clean required data and prepare for analysis if needed. 
+
+#capitalize everything
+sports_donations <- sports_donations %>% 
+  mutate_if(is.character, str_to_upper)
+
+#standardize dollar amounts
+donations_cleaned <- sports_donations %>% 
+  mutate(amount = str_replace_all(amount, "\\$|,", ""),
+         amount = as.numeric(amount))                    
+```
+
+## Sentences to Engineer
+In this notebook, we are reverse engineering five sentences from the story.
+
+### Sentence 1
+
+* **Sentence text**: American professional sports owners have contributed nearly $47 million in federal elections since 2015, according to research by ESPN in partnership with FiveThirtyEight.
+
+* **Analysis summary**: Yes, by finding the totals of the amounts, we found that the total does equate to the nearly $47 million in donations highlighted by the article. The only hiccup we had was redefining the amounts so they didn't have commas or dollar signs.
+
+```{r}
+# Put code to reverse engineer sentence here
+
+donations_cleaned %>% 
+  summarize(total_donations = sum(amount))
+
+partisan_filter <- donations_cleaned |>
+  filter (party == "Democrat" | party == "Republican") |>
+  group_by(league, party) |>
+  summarise(total_donations = sum(amount))
+
+# Display results of code below this codeblock
+
+#total_donations = 46978697	
+```
+
+### Sentence 2
+
+* **Sentence text**: That strong Republican lean is consistent with owners’ spending in the 2018 and 2016 federal elections as well. A deep search in the Federal Election Commission database of campaign finances for principal owners, controlling owners, co-owners and commissioners from the NBA, NFL, NHL, WNBA, MLB and NASCAR reveals that this deep-pocketed group has sent 34.2 million (72.9 percent) to Republican campaigns or super PACs purely supporting Republican causes, compared to 10.1 million (21.5 percent) to Democrats over the past three elections.
+
+* **Analysis summary**: Yes, we were able to prove the data: The Democratic party has received 10,113,639 over the past three election cycles; 21.53% of the total amount of donations over that time. The Republican party has received 34,246,016 over the past three election cycles; 72.9% of the total amount of donations over that time. The total amount of donations (denominator) includes donations to bipartisan causes, even if they have a partisan bias, and to independent causes. The partisan totals (numerator) that are used to determine the percentage represents donations to strictly Democratic or Republican entities, not to bipartisan causes that are "mostly democratic" or "mostly republican."
+
+
+```{r}
+# Put code to reverse engineer sentence here
+
+#checking to see if there are other leagues than the ones mentioned
+league_check <- donations_cleaned %>% 
+  group_by(league) %>% 
+  summarize(total_amount = sum(amount))
+
+#there are no extra leagues in the data but there are some people who have ownership of multiple teams in different leagues (ex: David Blitzer), ignoring for now b/c it doesn't pertain to this question
+
+partisan_totals <- donations_cleaned %>% 
+  group_by(party) %>% 
+  summarize(total_amount = sum(amount))
+
+partisan_pcts <- partisan_totals %>% 
+  mutate(party_pct = (total_amount)/sum(total_amount) * 100)
+
+#make sure this only includes the 2016, 2018 and 2020 election cycles
+election_check <- donations_cleaned %>% 
+  group_by(election_year) %>% 
+  summarize(total_amount = sum(amount))
+
+# Display results of code below this codeblock
+
+#The Democratic party has received $10,113,639 over the past three election cycles. This is 21.53% of the total amount of donations over that time. The Republican party has received $34,246,016 over the past three election cycles. This is 72.9% of the total amount of donations over that time.
+```
+
+### Sentence 3
+
+* **Sentence text**: Drilling down deeper into the data, we can see that federal contributions in each league lean red, except for in the WNBA.
+
+* **Analysis summary**: Based on our findings, the writers of the article were right for the most part. All of the leagues in the dataset lean red, including the WNBA — which they listed as the only league to lean Democrat. The donations to the Republican party are significantly more than the donation total to the Democrat party, with the WNBA as the closest difference (973459 to 824640).
+
+
+```{r}
+# Put code to reverse engineer sentence here
+
+partisan_filter <- donations_cleaned |>
+filter (party == "Democrat" | party == "Republican") |>
+group_by(league, party) |>
+summarise(
+total_donations = sum(amount)
+)
+
+# Display results of code below this codeblock
+
+```
+
+### Sentence 4
+
+* **Sentence text**: Drilling down deeper into the data, we can see that federal contributions in each league lean red, except for in the WNBA.
+
+* **Analysis summary**: Sentence number 4 is the same that the second part of the first sentence in the story, but the reporters rephrase the results different. We used the same code in both of them because there is no column that refers to candidates only, so we assume that they are referring to Trump = Republican donations, and Biden = Democratic donations. It's important to note that there were no independent donations by sports executives in the 2020 election; there are only 3 independent donations in the entire dataset.
+
+```{r}
+# Put code to reverse engineer sentence here
+
+donations_by_party_all <- donations_cleaned %>% 
+  filter(election_year == 2020) |> group_by(party) %>%
+  summarise(total_by_party = sum(amount, na.rm = TRUE),
+            number_donations = n())
+
+# Display results of code below this codeblock
+
+```
+
+### Sentence 5
+
+* **Sentence text**: [Paste in sentence to engineer here]
+* **Analysis summary**: [Write up two to three sentences describing the results of your analysis.  Were you able to confirm the finding? If not, why not?]
+
+```{r}
+# Put code to reverse engineer sentence here
+
+# Display results of code below this codeblock
+
+```
+
+-30-
