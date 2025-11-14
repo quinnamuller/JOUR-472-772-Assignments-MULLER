@@ -29,20 +29,20 @@ This week we'll be combining and joining data to make it more useful and to ask 
 
 ```{r}
 # load and combine the call data from those three counties
-allegany_911 <- read.csv("data/allegany_911.csv") %>% clean_names()
-carroll_911 <- read.csv("data/carroll_911.csv") %>% clean_names()
-cecil_911 <- read.csv("data/cecil_911.csv") %>% clean_names()
-ACC_911 <- bind_rows(allegany_911, carroll_911, cecil_911)
+allegany_calls <- read.csv("data/allegany_911.csv") %>% clean_names()
+carroll_calls <- read.csv("data/carroll_911.csv") %>% clean_names()
+cecil_calls <- read.csv("data/cecil_911.csv") %>% clean_names()
+total_calls <- bind_rows(allegany_calls, carroll_calls, cecil_calls)
 ```
 
 Then we'll join some demographic data with Baltimore City 911 calls and ask some questions of that. For that, you'll need to load the Baltimore City 911 data and the ZCTA demographic data from the data folder, and join them based on the zip code. Remember, the zip codes in both dataframes must be the same datatype (and should be characters). You should start with your Baltimore City 911 dataframe in creating your join.
 
 ```{r}
 # load and join the Baltimore-related data
-baltimore_911 <- read.csv("data/baltimore_911.csv") %>% clean_names()
-maryland_zcta <- read.csv("data/maryland_zcta.csv") %>% clean_names()
+baltimore_calls <- read.csv("data/baltimore_911.csv") %>% clean_names()
+maryland_demographics <- read.csv("data/maryland_zcta.csv") %>% clean_names()
 
-balt_zcta <- baltimore_911 |> left_join(maryland_zcta, join_by(zip_code==zcta5n))
+baltimore_calls_with_demographics <- baltimore_calls |> left_join(maryland_demographics, join_by(zip_code==zcta5n))
 ```
 
 ## Answer questions
@@ -52,51 +52,107 @@ Q1. Let's start with our data from Allegany, Cecil and Carroll counties. Write c
 A1: Carroll, Cecil, Allegany
 
 ```{r}
-acc_911_totals <- ACC_911 %>% 
+total_calls_per_county <- total_calls %>% 
   group_by(county) %>% 
-  summarize(total_calls=n()) %>% 
-  arrange(desc(total_calls))
+  summarize(total_calls_by_county=n()) %>% 
+  arrange(desc(total_calls_by_county))
 ```
 
 Q2. In your combined dataframe that you used in A1, add a column for the month of each call, then write code to show the total number of calls per county and month. Are there any outliers or noteworthy results? Describe the general pattern of the results.
 
+#Carroll County had the most calls overall. August had the most calls overall, followed by May. Allegany had a lot of variety in its calls per month, and Cecil had the most calls in a single month, which could be seen as an outlier. Cecil and Allegany counties  breaking the 50-call mark could also be an outlier, especially since Allegany also fell under 20 calls in January and November.
+
 Then calculate the most calls per county and location. Which location had the most calls - where and what is that location?
 
-A2 For the first part, they all fall around the 30s, so I guess that Allegany having 17 calls in November is very unusual. Cecil and Allegany counties also breaking the 50-call mark is also an outlier. The location with the most calls is 314 GROVE NECK RD EARLEVILLE, MD, which is a rehab center.
+#A2 The location with the most calls is 314 GROVE NECK RD EARLEVILLE, MD, which is a rehab center, so that makes sense.
 
 ```{r}
-acc_months <- ACC_911 %>%
+total_calls_with_months <- total_calls %>%
   mutate(month = month(date))
 
-acc_months_totals <- acc_months %>%
-  group_by(month, county) %>%
+total_calls_per_county <- total_calls_with_months %>%
+  group_by(county) %>%
+  summarise (total=n()) %>%
+  arrange(desc(total))
+
+total_calls_per_month <- total_calls_with_months %>%
+  group_by(month) %>%
+  summarise (total=n()) %>%
+  arrange(desc(total))
+
+total_calls_per_month_by_county <- total_calls_with_months %>%
+  group_by(county, month) %>%
   summarise (total=n()) %>%
   arrange(desc(total))
 ```
 
 ```{r}
-acc_co_loc <- ACC_911 %>% 
-  group_by(location, county) %>%  
+total_calls_by_location <- total_calls %>% 
+  group_by(location) %>%  
   summarise (total=n()) %>% 
   arrange(desc(total))
 ```
 
 Q3. Let's turn to the Baltimore City data. You're interested in exploring calls in zip codes with a high percentage of children under 18. Write code to isolate calls in zip codes where the percentage of under 18 population is at least 75% and then show the zip code and population and how many calls occurred in each of those zip codes.
 
-Where are those zip codes in the city?
+Where are those zip codes in the city? 
+#21201, 21202, 21205, 21213, 21216, 21217, 21223
 
 Add a column to your code that calculates the number of calls per 1,000 people for those zip codes. To calculate a per capita rate, you might find this short guide handy: [https://observablehq.com/\@palewire/per-capita-calculator](https://observablehq.com/@palewire/per-capita-calculator){.uri}.
 
-Which zip code has the highest rate of calls per 1,000 people? Find the neighborhoods in that zip code that are listed in the data - you can use group_by or distinct to do this. What are some of those neighborhoods, and what else can you tell me about the population there?
+Which zip code has the highest rate of calls per 1,000 people? Find the neighborhoods in that zip code that are listed in the data - you can use group_by or distinct to do this. What are some of those neighborhoods, and what else can you tell me about the population there? 
+#21205 has the highest rate of calls per 1000 people.
 
-A3.
+A3. 
+#Some of the neighborhoods are Gay Street, Armistead Gardens, and Orchard Ridge. It has a population of around 16,000 and less than half as many housing units. Almost 70% of the population is Black and the rest is mostly white or Hispanic. It also has a very high percentage of people that are under 18 which is around 80%.
 
 ```{r}
+baltimore_calls_high_under18 <- baltimore_calls_with_demographics %>% 
+  filter(pct_under_18 >= 75) 
+
+baltimore_calls_high_under18_by_zipcode <- baltimore_calls_high_under18 %>% 
+  group_by(zip_code) %>% 
+  summarize(total_calls_high_under18 = n())
+
+high_under18_calls_per_capita <- baltimore_calls_high_under18 %>%
+  mutate(calls_per_capita = (n()/population)*1000) %>% 
+  group_by(zip_code, calls_per_capita) %>% 
+  summarize(calls_per_capita_per_zip_code = n()) %>% 
+  arrange(desc(calls_per_capita))
+
+neighborhoods_21205 <- baltimore_calls_with_demographics %>% 
+  filter(zip_code==21205)
 ```
 
 Q4. Choose your own adventure: I want you to come up with a question you could ask of the Baltimore City data that combines both the calls and the demographic information. You must use both demographics and the overdose call data in your work.
 
-A4:
+#A4: Do predominantly Black neighborhoods really have more crime? Yes. Almost 80% of the calls came from areas where the majority of the population was Black. Comparatively speaking, 64% of the neighborhoods in Baltimore are predominantly Black. It is important to factor in population, but that's enough coding for today.
 
 ```{r}
+baltimore_calls_with_racial_majority <- baltimore_calls_with_demographics %>% 
+mutate(
+    racial_majority = case_when(
+        (pct_white_non_hispanic >= 50) ~ "White",
+        (pct_black_non_hispanic >= 50) ~ "Black",
+        (pct_native >= 50) ~ "Native American",
+        (pct_asian >= 50) ~ "Asian",
+        (pct_hawaiian >= 50) ~ "Hawaiian",
+        (pct_other >= 50) ~ "Other",
+        (pct_hispanic >= 50) ~ "Hispanic",
+        .default = "No Majority"
+      )
+)
+
+baltimore_calls_by_racial_majority <- baltimore_calls_with_racial_majority %>% 
+  group_by(racial_majority) %>% 
+  summarize(total_calls_by_racial_majority=n()) %>% 
+  arrange(desc(total_calls_by_racial_majority))
+
+neighborhood_demographics <- baltimore_calls_with_racial_majority %>%
+  distinct(neighborhood, racial_majority) %>%
+  group_by(racial_majority) %>% 
+  summarize(neighborhoods=n())
+  
+pct_neighborhoods <- neighborhood_demographics %>% 
+  mutate(pct_majority = neighborhoods/sum(neighborhoods)*100)
 ```
