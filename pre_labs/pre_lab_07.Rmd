@@ -18,7 +18,6 @@ knitr::opts_chunk$set(echo = TRUE)
 options(scipen=999)
 library(tidyverse)
 # if needed, install tidycensus, then load it.
-install.packages("tidycensus")
 library(tidycensus)
 ```
 
@@ -104,7 +103,7 @@ And now we calculate the percent change.
 **Task** Run the following codeblock to calculate the percentage change and put the state with the largest percentage growth below. **Answer**
 
 ```{r}
-alldata |> mutate(change = ((Population2010-Population2000)/Population2000)*100) |> arrange(desc(change))
+alldata <- alldata |> mutate(change = ((Population2010-Population2000)/Population2000)*100) |> arrange(desc(change))
 ```
 
 You may be asking: hey, wasn't there a 2020 Census? Where's that data? The answer is that it's coming - the Census Bureau has a [schedule of releases](https://www.census.gov/programs-surveys/popest/about/schedule.html). There are some variables available:
@@ -124,7 +123,7 @@ We can measure this by median household income. That variable is `B19013_001`, s
 
 ### Task 5: Answer Questions with ACS Data
 
-**Task** Run the following codeblock to find the Maryland county with the highest median household income and put the answer below. **Answer**
+**Task** Run the following codeblock to find the Maryland county with the highest median household income and put the answer below. **Answer: Howard County**
 
 ```{r}
 md <- get_acs(geography = "county",
@@ -141,7 +140,7 @@ What do the top counties all have in common? Lots of suburban flight from D.C an
 
 ### Task 6: Margins of Error
 
-**Task** Run the following codeblock to create a chart showing the margin of error for each county. The current headline isn't very descriptive of the data. What should it be? **Answer**
+**Task** Run the following codeblock to create a chart showing the margin of error for each county. The current headline isn't very descriptive of the data. What should it be? **Answer: Median Household Income by Maryland County**
 
 ```{r}
 md |>
@@ -157,9 +156,9 @@ md |>
 
 As you can see, some of the error bars are quite wide. Some are narrow. But if the bars overlap, it means the difference between the two counties is within the margin of error, and the differences aren't statistically significant.
 
-Is the difference between Calvert and Montgomery significant? **Answer**
+Is the difference between Calvert and Montgomery significant? **Answer: Yes**
 
-Is the difference between Howard and everyone else significant? **Answer**
+Is the difference between Howard and everyone else significant? **Answer: No**
 
 ### Task 7: Joining Multiple Years Together
 
@@ -186,7 +185,7 @@ What we're going to do next is a lot, but each step is simple. We're going to jo
 **Task** Run the following codeblock to join the data, rename the population estimates and then calculate the values we need. Notice how we select *after* we do the initial calculations so we only see the columns we're interested in (and drop the ones we don't want to see). Also note how the select function has the minus sign (-) in front of some columns? That means we don't want to see them in our result. Which jurisdictions saw the largest increases in median income? Did any counties see their median incomes fall from 2010-2021? **Answer**
 
 ```{r}
-md10 |>
+all_md_data <- md10 |>
   # join md10 to md21 using the shared GEOID and NAME columns
   inner_join(md21, by=c("GEOID", "NAME")) |>
   # rename the first estimate to clarify that it's from 2010 and the second estimate to clarify that it's from 2021
@@ -210,15 +209,24 @@ md_high_schools <- read_csv("data/md_high_schools.csv") |>
 
 The Census Bureau has Zip Code Tabulation Areas - they are mostly identical to what we know as zip codes, with some small differences. In most cases we can use them interchangeably.
 
-**Task** Let's get ZCTA household income data from the ACS using tidycensus for each zip code in `md_high_schools`. Run the following codeblock to retrieve household income data from 2019 - the latest year for which we have it for all Maryland ZCTAs - first, then join them to `md_high_schools` using the GEOID column. We'll also create min and max values and drop any rows where we don't have income estimates. What's one question we could ask of this data now that we have enrollment percentages and household income for the high school's zip code? What might make the answer harder to interpret? **Answer**
+**Task** Let's get ZCTA household income data from the ACS using tidycensus for each zip code in `md_high_schools`. Run the following codeblock to retrieve household income data from 2019 - the latest year for which we have it for all Maryland ZCTAs - first, then join them to `md_high_schools` using the GEOID column. We'll also create min and max values and drop any rows where we don't have income estimates. What's one question we could ask of this data now that we have enrollment percentages and household income for the high school's zip code? What might make the answer harder to interpret? 
+
+**Answer: Do schools in areas with higher median household incomes have more high school graduates who enrolled in college? This may be difficult to interpret because college enrollment can be impacted by a lot more than just money. It can be impacted by family values, demographics, local industry, college or career readiness programs in high schools, etc. Looking at the two high schools in Charles County with the zip code 20603, we can see that even with the median household income being the same, North Point High School has significantly 16 more percentage points of students going to college.**
 
 ```{r}
 md_zipcodes <- get_acs(geography="zcta", variables = "B19013_001", state='MD', year=2019)
-md_high_schools_with_acs <- md_high_schools |> left_join(md_zipcodes, by=c('zip'='GEOID'))
-md_high_schools_with_acs <- md_high_schools_with_acs |> mutate(min=(estimate-moe), max=(estimate+moe)) |> drop_na()
+
+md_high_schools_with_acs <- md_high_schools |>
+  left_join(md_zipcodes, by=c('zip'='GEOID'))
+
+md_high_schools_with_acs <- md_high_schools_with_acs |>
+  mutate(min=(estimate-moe), max=(estimate+moe)) |> drop_na()
 ```
 
-**Task** Let's look at the average household income for high schools that have 60% or more graduates immediately enrolling in college, and then look at those with less than 40%. Write a sentence describing the results. **Answer**
+
+**Task** Let's look at the average household income for high schools that have 60% or more graduates immediately enrolling in college, and then look at those with less than 40%. Write a sentence describing the results. 
+
+**Answer: The high schools with 60% or more students going to college has around 112000 median household income. The high schools with 40% or fewer students going to college has around 69000 median household income. This is a difference of 43000, which is pretty significant.**
 
 ```{r}
 md_high_schools_with_acs |>
@@ -230,4 +238,17 @@ md_high_schools_with_acs |>
   summarize(avg_income = mean(estimate), count = n())
 ```
 
-**Task** What is another question you could ask of this data? **Answer**
+**Task** What is another question you could ask of this data?
+#Do very small high schools have higher or lower college enrollment rates than very big high schools? Consider other factors: location, ruralness, more resources in big schools, etc.
+
+```{r}
+md_high_schools_with_acs |>
+  filter(high_school_graduates <= 150) |> 
+  summarize(avg_enrollment = mean(percent_of_high_school_graduates_enrolled), count =n())
+
+md_high_schools_with_acs |>
+  filter(high_school_graduates >= 450) |> 
+  summarize(avg_enrollment = mean(percent_of_high_school_graduates_enrolled), count = n())
+```
+
+**Answer: In Maryland, smaller high schools on average have around 41% of graduates enrolled in college. Bigger high schools on average have around 55% of graduates enrolled in college. Bigger high schools have significantly more students enrolled in colelge after graduation.**
