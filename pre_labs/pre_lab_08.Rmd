@@ -32,10 +32,10 @@ The dataset we'll use is 911 overdose calls from Baltimore County in 2022. Let's
 
 ### Task 2: Load data
 
-**Task** Run the following code to load the data. In the space below, indicate how many rows and columns it has. **Answer**
+**Task** Run the following code to load the data. In the space below, indicate how many rows and columns it has. **Answer: 4 columns and 3822 rows**
 
 ```{r}
-baltco_911_calls <- read_csv("data/baltco_911_calls.csv")
+baltimore_overdose_calls <- read_csv("data/baltco_911_calls.csv")
 ```
 
 ## Bar charts
@@ -44,7 +44,7 @@ The first kind of chart we'll create is a simple bar chart.
 
 It's a chart designed to show differences between things -- the magnitude of one thing, compared to the next thing, and the next, and the next.
 
-So if we have thing, like a county, or a month, or a day of the week, and then a count of that group, we can make a bar chart.
+So if we have a thing, like a county, or a month, or a day of the week, and then a count of that group, we can make a bar chart.
 
 So what does the chart of the top months with the most 911 overdose calls look like?
 
@@ -52,16 +52,18 @@ First, we'll add a month column to our dataframe using lubridate.
 
 ### Task 3: Add a month column to our 911 calls dataframe using lubridate and calculate the number of calls for each month
 
-**Task** Run the following code to add a month column to our dataframe using lubridate and count the number of calls for each month. In the space below, explain what each step of the code below is doing in English. Note the "label=TRUE" part in the mutate statement. **Answer**
+**Task** Run the following code to add a month column to our dataframe using lubridate and count the number of calls for each month. In the space below, explain what each step of the code below is doing in English. Note the "label=TRUE" part in the mutate statement. 
+
+**Answer: The first line assigns a name, baltimore_overdose_calls_by_month, to a new dataframe based on the baltimore_overdose_calls dataframe. The second line adds a new column to the dataframe, the month of each call. The third and fourth lines group the data by month and summarize it by the total number of calls in the corresponding month. The fifth line arranges the data by which month had to most calls to which month has the least.**
 
 ```{r}
-baltco_911_calls_by_month <- baltco_911_calls |>
+baltimore_overdose_calls_by_month <- baltimore_overdose_calls |>
   mutate(month = month(date, label=TRUE)) |> 
   group_by(month) |> 
   summarize(total_calls = n()) |> 
   arrange(desc(total_calls))
 
-baltco_911_calls_by_month
+baltimore_overdose_calls_by_month
 ```
 
 Now let's create a bar chart using ggplot.
@@ -70,10 +72,10 @@ With ggplot, the first thing we'll always do is draw a blank canvas that will co
 
 ### Task 4: Create an empty ggplot container
 
-**Task** Run the following code. Explain what you see after running the code in the space below. **Answer**
+**Task** Run the following code. Explain what you see after running the code in the space below. **Answer: All I see is a grey box.**
 
 ```{r}
-baltco_911_calls_by_month |>
+baltimore_overdose_calls_by_month |>
   ggplot()
 ```
 
@@ -101,10 +103,12 @@ After we've invoked the ggplot() function, you'll notice we're using a + symbol.
 
 ### Task 5: Run the following code
 
-**Task** Run the following code. Explain what you see after running the code in the space below. **Answer**
+**Task** Run the following code. Explain what you see after running the code in the space below. 
+
+**Answer: I see a bunch of columns, one for each month that are as high as the number of calls for that given month.**
 
 ```{r}
-baltco_911_calls_by_month |>
+baltimore_overdose_calls_by_month |>
   ggplot() +
   geom_bar(aes(x=month, weight=total_calls))
 ```
@@ -113,10 +117,12 @@ This is a very basic chart. But it's hard to derive much meaning from this chart
 
 ### Task 6: Run the following code
 
-**Task** Run the following code. Explain what you see after running the code in the space below. What has changed from the last codeblock? **Answer**
+**Task** Run the following code. Explain what you see after running the code in the space below. What has changed from the last codeblock? 
+
+**Answer: Each bar is in order from left to right in ascending order of the amount of calls for that given month.**
 
 ```{r}
-baltco_911_calls_by_month |>
+baltimore_overdose_calls_by_month |>
   ggplot() +
   geom_bar(aes(x=reorder(month,total_calls), weight=total_calls))
 ```
@@ -125,10 +131,12 @@ This is a little more useful. But the bottom is kind of a mess, with overlapping
 
 ### Task 7: Run the following code
 
-**Task** Run the following code. Explain what you see after running the code in the space below. What has changed from the last codeblock? **Answer**
+**Task** Run the following code. Explain what you see after running the code in the space below. What has changed from the last codeblock? 
+
+**Answer: Now all of the months are on the y-axis and the total calls are on the x-axis.**
 
 ```{r}
-baltco_911_calls_by_month |>
+baltimore_overdose_calls_by_month |>
   ggplot() +
   geom_bar(aes(x=reorder(month,total_calls), weight=total_calls)) +
   coord_flip()
@@ -144,10 +152,12 @@ It's kind of like applying CSS to html. Here I'm changing the theme slightly to 
 
 ### Task 8: Run the following code
 
-**Task** Run the following code. Explain what you see after running the code in the space below. What has changed from the last codeblock? **Answer**
+**Task** Run the following code. Explain what you see after running the code in the space below. What has changed from the last codeblock? 
+
+**Answer: The background is no longer grey, it's white.**
 
 ```{r}
-baltco_911_calls_by_month |>
+baltimore_overdose_calls_by_month |>
   ggplot() +
   geom_bar(aes(x=reorder(month,total_calls), weight=total_calls)) +
   coord_flip() + 
@@ -171,10 +181,10 @@ And now we'll apply the economist theme from that package with theme_economist()
 
 ### Task 10: Run the following code
 
-**Task** Run the following code. Explain what you see after running the code in the space below. What has changed from the last version of the chart? **Answer**
+**Task** Run the following code. Explain what you see after running the code in the space below. What has changed from the last version of the chart? **Answer: The background is this grey-sh blue color, and the background lines are thicker and not a grid.**
 
 ```{r}
-baltco_911_calls_by_month |>
+baltimore_overdose_calls_by_month |>
   ggplot() +
   geom_bar(aes(x=reorder(month,total_calls), weight=total_calls)) +
   coord_flip() + 
@@ -188,7 +198,7 @@ Those axis titles are kind of a mess. Let's change "count" on the x axis to "tot
 **Task** Run the following code. Explain what you see after running the code in the space below. What has changed from the last codeblock? **Answer**
 
 ```{r}
-baltco_911_calls_by_month |>
+baltimore_overdose_calls_by_month |>
   ggplot() +
   geom_bar(aes(x=reorder(month,total_calls), weight=total_calls)) +
   coord_flip() + 
@@ -214,16 +224,16 @@ So, let's use the same Baltimore County data and generate a count of contributio
 
 ### Task 12: Create a dataframe of 911 calls by date
 
-**Task** Run the following code. Explain what you see after running the code in the space below. **Answer**
+**Task** Run the following code. Explain what you see after running the code in the space below. **Answer: A chart of the number of calls for each date for a year. There is one entry for Feb. 6 in 2022 and 2023, which causes the dataframe to have 366 variables rather than 365.**
 
 ```{r}
-baltco_911_calls_by_date <- baltco_911_calls |>
+baltimore_overdose_calls_by_date <- baltimore_overdose_calls |>
   group_by(date) |>
   summarise(
     total_calls=n()
   )
 
-baltco_911_calls_by_date 
+baltimore_overdose_calls_by_date 
 ```
 
 And now let's make a line chart to look for patterns in this data.
@@ -232,10 +242,10 @@ We'll put the date on the x axis and total contributions on the y axis.
 
 ### Task 13: Run the following code
 
-**Task** Run the following code. Explain what you see after running the code in the space below. **Answer**
+**Task** Run the following code. Explain what you see after running the code in the space below. **Answer: A line chare of the number of overdose calls each day for a year.**
 
 ```{r}
-baltco_911_calls_by_date |>
+baltimore_overdose_calls_by_date |>
   ggplot() + 
   geom_line(aes(x=date, y=total_calls))
 ```
@@ -250,10 +260,10 @@ We'll set the date_breaks to appear for every week; if we wanted every month, we
 
 ### Task 14: Run the following code
 
-**Task** Run the following code. Explain what you see after running the code in the space below. **Answer**
+**Task** Run the following code. Explain what you see after running the code in the space below. **Answer: There are a lot more labels on x-axis, but th edata looks the same.**
 
 ```{r}
-baltco_911_calls_by_date |>
+baltimore_overdose_calls_by_date |>
   ggplot() + 
   geom_line(aes(x=date, y=total_calls)) + 
   scale_x_date(date_breaks = "1 week", date_labels = "%b %d")
@@ -263,10 +273,10 @@ Those are a little hard to read, so we can turn them 45 degrees to remove the ov
 
 ### Task 15: Run the following code
 
-**Task** Run the following code. Explain what you see after running the code in the space below. **Answer**
+**Task** Run the following code. Explain what you see after running the code in the space below. **Answer: The labels are still pretty hard to see but each week is labelled at a 45 degree angle.**
 
 ```{r}
-baltco_911_calls_by_date |>
+baltimore_overdose_calls_by_date |>
   ggplot() + 
   geom_line(aes(x=date, y=total_calls)) + 
   scale_x_date(date_breaks = "1 week", date_labels = "%b %d") +
