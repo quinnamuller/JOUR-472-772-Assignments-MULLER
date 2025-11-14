@@ -48,7 +48,6 @@ You'll also need to load the list of American Community Survey variables from th
 
 ```{r}
 variables <- load_variables(2023, "acs5", cache = TRUE)
-variables2019 <- load_variables(2019, "acs5", cache = TRUE)
 ```
 
 ## Answer questions
@@ -64,9 +63,11 @@ md_age %>%
   arrange(estimate)
 ```
 
-**Q2** Which Maryland counties have a median age of at least 50? You can use the dataframe you just made to answer this, but you must write code to display only those counties with a median age of at least 50. **A2**
+**Q2** Which Maryland counties have a median age of at least 50? You can use the dataframe you just made to answer this, but you must write code to display only those counties with a median age of at least 50. **A2: Talbot and Worcester counties.**
 
 ```{r}
+md_age %>% 
+  filter(estimate >= 50)
 ```
 
 **Q3** We're interested in knowing more about Montgomery County zip codes where overdose calls are coming from and the demographic characteristics they possess. In particular, we want to calculate a rate of calls per 1,000 population. To do this, you'll need to:
@@ -80,28 +81,38 @@ md_age %>%
 
 Which zip code has the highest rate of calls? Which has the lowest?
 
-**A3**
+**A3: In 2019, 20877 had the highest rate of calls, which is in Gaithersburg. 20707 had the lowest rate of calls, which is in Laurel.**
 
 ```{r}
-moco911 <- read_csv("data/montgomery_2022_overdoses.csv") %>% clean_names() %>% mutate(zip = as.character(zip))
+montgomery_overdoses <- read_csv("data/montgomery_2022_overdoses.csv") %>% clean_names() %>% mutate(zip = as.character(zip))
 
-moco_totals <- moco911 %>% 
+montgomery_overdoses_by_zip <- montgomery_overdoses %>% 
   group_by(zip) %>% 
   summarize(total_calls = n())
 
-md_18_up_pop <- get_acs(geography = "zcta",
-              variables = c(find_variable = "B01002_001"),
+md_pop_over_18 <- get_acs(geography = "zcta",
+              variables = c(pop_over_18 = "B05003_008"),
               state = "MD",
               year = 2019)
+
+montgomery_overdoses_by_zip <- montgomery_overdoses_by_zip %>% 
+  left_join(md_pop_over_18, join_by(zip==GEOID)) %>% 
+  rename(pop_over_18=estimate)
+
+montgomery_overdoses_by_zip <- montgomery_overdoses_by_zip %>%
+  mutate(calls_per_1000=(total_calls/pop_over_18)*1000) %>% 
+  arrange(desc(calls_per_1000))
 ```
 
 **Q4** Using [CensusReporter.org](https://censusreporter.org/), examine the zip codes with the highest and lowest rates and compare and contrast their demographic profiles. Is there a story here?
 
-**A4**
+**A4: All of the zip codes with the highest rates of overdose calls in Montgomery County have similar median ages in the high 30s. They all have very different racial, economic, educational and housing profiles. All of the zip codes with the lowest rates of overdose calls in MoCo also have a lot of variability, so I don't think there really is a story here.**
 
 **Q5** Go back to your joined dataframe from Q3 and add two more columns representing the minimum and maximum populations based on the estimate and margin of error, then calculate per capita rates for each. Do you get the same two zip codes for the highest and lowest as you did before? Does that give you more or less confidence in your answers to Q3?
 
-**A5**
+**A5: The original zip codes with the lowest overdose call rates were 20707, 20832 and 20833. With the margin of error, the zip codes could be 21794, 20860 and 20861, so they all changed. However, the fourth lowest was 20833. The original zip codes with the highest overdose call rates were 20877, 20852 and 20874. With the margin of error, the zip codes could be 21794, 20860 and 20861, so they also all changed. This gives me a lot less confidence in my answers to Q3.**
 
 ```{r}
+montgomery_overdoses_by_zip <- montgomery_overdoses_by_zip %>% 
+  mutate(max_pop = pop_over_18 + moe, min_pop = pop_over_18 - moe, min_pop_per_1000 = (min_pop/pop_over_18)*1000, , max_pop_per_1000 = (max_pop/pop_over_18)*1000)
 ```
