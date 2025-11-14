@@ -47,7 +47,7 @@ sports_donations <- sports_donations %>%
 
 #standardize dollar amounts
 donations_cleaned <- sports_donations %>% 
-  mutate(amount = str_replace_all(amount, "\\$|,", ""),
+  mutate(amount = str_replace_all(amount, "\\$\\,", ""),
          amount = as.numeric(amount))                    
 ```
 
