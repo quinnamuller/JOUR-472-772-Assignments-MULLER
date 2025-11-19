@@ -208,7 +208,6 @@ baltimore_overdose_calls_by_month |>
     x = "month",
     y = "total calls",
     caption = "source: Baltimore County"
-    
   )
 ```
 
