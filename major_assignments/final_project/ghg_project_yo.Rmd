@@ -49,12 +49,12 @@ parent_comp <- ghg_data_2023 |>
   arrange(desc(count))
 ```
 
-## Q1: Where are most greenhouse gases emitted? (state)
+## Q1: Where are most greenhouse gases emitted? (state/facility)
 
 ## We first grouped by state, and then we summarized the amount of co2e. Once we counted the number of facilities, we can divide the co2e emissions by the number of facilities to get an average per facility within the state. I then showed the top 10 results. View this data visualization for more information: https://datawrapper.dwcdn.net/lY3Nh/1/
 
 ```{r}
-emissions_by_state <- ghg_data_2023 |>
+emissions_by_facility <- ghg_data_2023 |>
   group_by(state) |>
   summarise(
     total_mtco2e = sum(ghg_quantity_metric_tons_co2e, na.rm = TRUE),
@@ -70,7 +70,7 @@ write.csv(emissions_by_state, file = "emissions_by_state.csv", row.names = FALSE
 
 ## Q2: How many tons of greenhouse gases are emitted per day?
 
-## We summarized our number of metric tons of co2e, then easily divided by 365, the number of days within a year. We could always do the same as before and find per state or per facility.
+## We summarized our number of metric tons of co2e, then easily divided by 365, the number of days within a year. We could always do the same as before and find per state or per facility. An average of 7,063,787 metric tons of CO2 are emitted each day.
 
 ```{r}
 average_2023_mtco2e <- ghg_data_2023 |>
@@ -105,10 +105,10 @@ write.csv(emissions_by_zip, file = "emissions_by_zip.csv", row.names = FALSE)
 
 ## Q4: Who is emitting the most greenhouse gases?
 
-## We thought it would be interesting to see what parent company is emitting the most greenhouse gases. In order to find that, we grouped the emissions by their parent company and then summed up the the total emissions. Vistra Corp has emitted by the far most of any of the parent companies.
+## We thought it would be interesting to see what parent company is emitting the most greenhouse gases. In order to find that, we grouped the emissions by their parent company and then summed up the the total emissions. Vistra Corp has emitted by the far most of any of the parent companies with 86,315,363 metric tons. 
 
 ```{r}
-ghg_data_2023 |>
+ghg_2023_most <- ghg_data_2023 |>
 group_by(parent_companies) |>
 summarise (
 total_emissions = sum(ghg_quantity_metric_tons_co2e)
