@@ -51,7 +51,7 @@ parent_comp <- ghg_data_2023 |>
 
 ## Q1: Where are most greenhouse gases emitted? (state)
 
-## We first grouped by state, and then we summarized the amount of co2e. Once we counted the number of facilities, we can divide the co2e emissions by the number of facilities to get an average per facility within the state. I then showed the top 10 results.
+## We first grouped by state, and then we summarized the amount of co2e. Once we counted the number of facilities, we can divide the co2e emissions by the number of facilities to get an average per facility within the state. I then showed the top 10 results. View this data visualization for more information: https://datawrapper.dwcdn.net/lY3Nh/1/
 
 ```{r}
 emissions_by_state <- ghg_data_2023 |>
@@ -79,6 +79,14 @@ average_2023_mtco2e <- ghg_data_2023 |>
 ```
 
 ## Q3: What zipcodes are emitting the most greenhouse gases?
+
+## 77002, which is Houston, Texas, has emitted the most greenhouse gases. The zip code is home to a wide variety of companies who expelling large amounts of CO2. 80202, which is Denver, Colorado, is the second highest in carbon emissions for 2023. The zip code is home to a wide variety of companies who expelling large amounts of CO2. 45620, Cheshire, Ohio, is the third highest for carbon emissions. It makes sense that Denver and Houston have a variety of carbon-emitting entities, but Cheshire, Ohio seems a bit random. The majority of the emissions come from a company called LIGHTSTONE GENERATION LLC at the General James M. Gavin Power Plant. This carbon emissions entry not only makes Cheshire, Ohio the third-most carbon-emitting zip code in the country, but it is the third-largest carbon emissions entry in the country overall. The entry is one of only 13 others that were more than 10,000,000 metric tons.
+
+```{r}
+ghg_data_2023_mil <- ghg_data_2023 %>% 
+  filter(ghg_quantity_metric_tons_co2e >= 10000000)
+```
+
 
 ```{r}
 emissions_by_zip <- ghg_data_2023 |>
@@ -109,6 +117,8 @@ arrange(desc(total_emissions))
 ```
 
 ## Q5: Are greenhouse gas emissions going down over the last 10 years?
+
+## Yes, they are decreasing slightly as shown by this graphic. https://datawrapper.dwcdn.net/m14FV/1/
 
 ```{r}
 #2023
@@ -241,4 +251,5 @@ write.csv(decade_total_emissions, file = "decade_total_emissions.csv", row.names
 
 #refer to datawrapper chart in memo
 ```
+
 
