@@ -1,0 +1,244 @@
+---
+title: "ghg project"
+author: "Andrew Diveley, Dylan Schmidt, Quinn Muller, Lillian Glaros"
+date: "2025-12-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load libraries and establish settings
+
+**Task** Create a codeblock and load appropriate packages and settings for this lab.
+
+```{r}
+library(tidyverse)
+library(tidytext)
+library(janitor)
+library(lubridate)
+library(rvest)
+install.packages("readxl")
+library(readxl)
+```
+
+## Load the GHG dataset (load more as needed)
+
+```{r}
+ghg_data_2023 <- read_xls("data/flight.xls") |> clean_names()
+ghg_data_2022 <- read_excel("data/flight.xls", sheet = 2) |> clean_names()
+ghg_data_2021 <- read_excel("data/flight.xls", sheet = 3) |> clean_names()
+ghg_data_2020 <- read_excel("data/flight.xls", sheet = 4) |> clean_names()
+ghg_data_2019 <- read_excel("data/flight.xls", sheet = 5) |> clean_names()
+ghg_data_2018 <- read_excel("data/flight.xls", sheet = 6) |> clean_names()
+ghg_data_2017 <- read_excel("data/flight.xls", sheet = 7) |> clean_names()
+ghg_data_2016 <- read_excel("data/flight.xls", sheet = 8) |> clean_names()
+ghg_data_2015 <- read_excel("data/flight.xls", sheet = 9) |> clean_names()
+ghg_data_2014 <- read_excel("data/flight.xls", sheet = 10) |> clean_names()
+```
+
+## Problems with our datasets: we cant answer the one question about the types of GHG, this only shows CO2. We have all the years from 2010-2023, so we can look at trends over the years. There are some missing fields we'll have to remove as needed. It is nice we get every part of the location/address that we can further group. We do need to figure out the "sub-parts" column to see if it may provide any relevance to our questions. We may find that certain places may not have reported in previous years or have moved and that could complicate things.
+
+## Group by parent companies
+
+```{r}
+parent_comp <- ghg_data_2023 |>
+  group_by(parent_companies) |>
+  summarise(count=n()) |>
+  arrange(desc(count))
+```
+
+## Q1: Where are most greenhouse gases emitted? (state)
+
+## We first grouped by state, and then we summarized the amount of co2e. Once we counted the number of facilities, we can divide the co2e emissions by the number of facilities to get an average per facility within the state. I then showed the top 10 results.
+
+```{r}
+emissions_by_state <- ghg_data_2023 |>
+  group_by(state) |>
+  summarise(
+    total_mtco2e = sum(ghg_quantity_metric_tons_co2e, na.rm = TRUE),
+    n_facilities = n()
+  ) |>
+  mutate(avg_mtco2e_per_facility = total_mtco2e / n_facilities) |>
+  arrange(desc(total_mtco2e))
+
+emissions_by_state |> head(10)
+
+write.csv(emissions_by_state, file = "emissions_by_state.csv", row.names = FALSE)
+```
+
+## Q2: How many tons of greenhouse gases are emitted per day?
+
+## We summarized our number of metric tons of co2e, then easily divided by 365, the number of days within a year. We could always do the same as before and find per state or per facility.
+
+```{r}
+average_2023_mtco2e <- ghg_data_2023 |>
+  summarise(total_mtco2e = sum(ghg_quantity_metric_tons_co2e, na.rm = TRUE)) |>
+  mutate(mtco2e_per_day = total_mtco2e / 365)
+```
+
+## Q3: What zipcodes are emitting the most greenhouse gases?
+
+```{r}
+emissions_by_zip <- ghg_data_2023 |>
+  group_by(zip_code) |>
+  summarise(
+    total_mtco2e = sum(ghg_quantity_metric_tons_co2e, na.rm = TRUE),
+    n_facilities = n()
+  ) |>
+  mutate(avg_mtco2e_per_facility = total_mtco2e / n_facilities) |>
+  arrange(desc(total_mtco2e))
+
+emissions_by_zip |> head(10)
+
+write.csv(emissions_by_zip, file = "emissions_by_zip.csv", row.names = FALSE)
+```
+
+## Q4: Who is emitting the most greenhouse gases?
+
+## We thought it would be interesting to see what parent company is emitting the most greenhouse gases. In order to find that, we grouped the emissions by their parent company and then summed up the the total emissions. Vistra Corp has emitted by the far most of any of the parent companies.
+
+```{r}
+ghg_data_2023 |>
+group_by(parent_companies) |>
+summarise (
+total_emissions = sum(ghg_quantity_metric_tons_co2e)
+) |>
+arrange(desc(total_emissions))
+```
+
+## Q5: Are greenhouse gas emissions going down over the last 10 years?
+
+```{r}
+#2023
+
+total_emissions_2023 <- ghg_data_2023 |>
+  group_by(reporting_year) |> 
+  summarise(
+    total_mtco2e = sum(ghg_quantity_metric_tons_co2e, na.rm = TRUE),
+    n_facilities = n(),
+  )
+
+total_emissions_2023 <- total_emissions_2023 |>
+  mutate(avg_mtco2e_per_facility = total_mtco2e / n_facilities)
+
+#2022
+
+total_emissions_2022 <- ghg_data_2022 |>
+  group_by(reporting_year) |> 
+  summarise(
+    total_mtco2e = sum(ghg_quantity_metric_tons_co2e, na.rm = TRUE),
+    n_facilities = n(),
+  )
+
+total_emissions_2022 <- total_emissions_2022 |>
+  mutate(avg_mtco2e_per_facility = total_mtco2e / n_facilities)
+
+#2021
+
+total_emissions_2021 <- ghg_data_2021 |>
+  group_by(reporting_year) |> 
+  summarise(
+    total_mtco2e = sum(ghg_quantity_metric_tons_co2e, na.rm = TRUE),
+    n_facilities = n(),
+  )
+
+total_emissions_2021 <- total_emissions_2021 |>
+  mutate(avg_mtco2e_per_facility = total_mtco2e / n_facilities)
+
+#2020
+
+total_emissions_2020 <- ghg_data_2020 |>
+  group_by(reporting_year) |> 
+  summarise(
+    total_mtco2e = sum(ghg_quantity_metric_tons_co2e, na.rm = TRUE),
+    n_facilities = n(),
+  )
+
+total_emissions_2020 <- total_emissions_2020 |>
+  mutate(avg_mtco2e_per_facility = total_mtco2e / n_facilities)
+
+#2019
+
+total_emissions_2019 <- ghg_data_2019 |>
+  group_by(reporting_year) |> 
+  summarise(
+    total_mtco2e = sum(ghg_quantity_metric_tons_co2e, na.rm = TRUE),
+    n_facilities = n(),
+  )
+
+total_emissions_2019 <- total_emissions_2019 |>
+  mutate(avg_mtco2e_per_facility = total_mtco2e / n_facilities)
+
+#2018
+
+total_emissions_2018 <- ghg_data_2018 |>
+  group_by(reporting_year) |> 
+  summarise(
+    total_mtco2e = sum(ghg_quantity_metric_tons_co2e, na.rm = TRUE),
+    n_facilities = n(),
+  )
+
+total_emissions_2018 <- total_emissions_2018 |>
+  mutate(avg_mtco2e_per_facility = total_mtco2e / n_facilities)
+
+#2017
+
+total_emissions_2017 <- ghg_data_2017 |>
+  group_by(reporting_year) |> 
+  summarise(
+    total_mtco2e = sum(ghg_quantity_metric_tons_co2e, na.rm = TRUE),
+    n_facilities = n(),
+  )
+
+total_emissions_2017 <- total_emissions_2017 |>
+  mutate(avg_mtco2e_per_facility = total_mtco2e / n_facilities)
+
+#2016
+
+total_emissions_2016 <- ghg_data_2016 |>
+  group_by(reporting_year) |> 
+  summarise(
+    total_mtco2e = sum(ghg_quantity_metric_tons_co2e, na.rm = TRUE),
+    n_facilities = n(),
+  )
+
+total_emissions_2016 <- total_emissions_2016 |>
+  mutate(avg_mtco2e_per_facility = total_mtco2e / n_facilities)
+
+#2015
+
+total_emissions_2015 <- ghg_data_2015 |>
+  group_by(reporting_year) |> 
+  summarise(
+    total_mtco2e = sum(ghg_quantity_metric_tons_co2e, na.rm = TRUE),
+    n_facilities = n(),
+  )
+
+total_emissions_2015 <- total_emissions_2015 |>
+  mutate(avg_mtco2e_per_facility = total_mtco2e / n_facilities)
+
+#2014
+
+total_emissions_2014 <- ghg_data_2014 |>
+  group_by(reporting_year) |> 
+  summarise(
+    total_mtco2e = sum(ghg_quantity_metric_tons_co2e, na.rm = TRUE),
+    n_facilities = n(),
+  )
+
+total_emissions_2014 <- total_emissions_2014 |>
+  mutate(avg_mtco2e_per_facility = total_mtco2e / n_facilities)
+```
+
+```{r}
+#join all dataframes, stack
+
+decade_total_emissions <- bind_rows(list(total_emissions_2014, total_emissions_2015, total_emissions_2016, total_emissions_2016, total_emissions_2017, total_emissions_2018, total_emissions_2019, total_emissions_2020, total_emissions_2021, total_emissions_2022, total_emissions_2023))
+
+write.csv(decade_total_emissions, file = "decade_total_emissions.csv", row.names = FALSE)
+
+#refer to datawrapper chart in memo
+```
+
