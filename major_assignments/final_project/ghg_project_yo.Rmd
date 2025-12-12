@@ -27,15 +27,6 @@ library(readxl)
 
 ```{r}
 ghg_data_2023 <- read_xls("data/flight.xls") |> clean_names()
-ghg_data_2022 <- read_excel("data/flight.xls", sheet = 2) |> clean_names()
-ghg_data_2021 <- read_excel("data/flight.xls", sheet = 3) |> clean_names()
-ghg_data_2020 <- read_excel("data/flight.xls", sheet = 4) |> clean_names()
-ghg_data_2019 <- read_excel("data/flight.xls", sheet = 5) |> clean_names()
-ghg_data_2018 <- read_excel("data/flight.xls", sheet = 6) |> clean_names()
-ghg_data_2017 <- read_excel("data/flight.xls", sheet = 7) |> clean_names()
-ghg_data_2016 <- read_excel("data/flight.xls", sheet = 8) |> clean_names()
-ghg_data_2015 <- read_excel("data/flight.xls", sheet = 9) |> clean_names()
-ghg_data_2014 <- read_excel("data/flight.xls", sheet = 10) |> clean_names()
 ```
 
 ## Problems with our datasets: we cant answer the one question about the types of GHG, this only shows CO2. We have all the years from 2010-2023, so we can look at trends over the years. There are some missing fields we'll have to remove as needed. It is nice we get every part of the location/address that we can further group. We do need to figure out the "sub-parts" column to see if it may provide any relevance to our questions. We may find that certain places may not have reported in previous years or have moved and that could complicate things.
@@ -66,6 +57,8 @@ emissions_by_facility <- ghg_data_2023 |>
 emissions_by_state |> head(10)
 
 write.csv(emissions_by_state, file = "emissions_by_state.csv", row.names = FALSE)
+
+#refer to datawrapper map: https://www.datawrapper.de/_/lY3Nh/
 ```
 
 ## Q2: How many tons of greenhouse gases are emitted per day?
@@ -121,6 +114,18 @@ arrange(desc(total_emissions))
 ## Yes, they are decreasing slightly as shown by this graphic. https://datawrapper.dwcdn.net/m14FV/1/
 
 ```{r}
+#load extra ghg dataframes to see the trend over the part 10 years
+
+ghg_data_2022 <- read_excel("data/flight.xls", sheet = 2) |> clean_names()
+ghg_data_2021 <- read_excel("data/flight.xls", sheet = 3) |> clean_names()
+ghg_data_2020 <- read_excel("data/flight.xls", sheet = 4) |> clean_names()
+ghg_data_2019 <- read_excel("data/flight.xls", sheet = 5) |> clean_names()
+ghg_data_2018 <- read_excel("data/flight.xls", sheet = 6) |> clean_names()
+ghg_data_2017 <- read_excel("data/flight.xls", sheet = 7) |> clean_names()
+ghg_data_2016 <- read_excel("data/flight.xls", sheet = 8) |> clean_names()
+ghg_data_2015 <- read_excel("data/flight.xls", sheet = 9) |> clean_names()
+ghg_data_2014 <- read_excel("data/flight.xls", sheet = 10) |> clean_names()
+
 #2023
 
 total_emissions_2023 <- ghg_data_2023 |>
@@ -249,7 +254,61 @@ decade_total_emissions <- bind_rows(list(total_emissions_2014, total_emissions_2
 
 write.csv(decade_total_emissions, file = "decade_total_emissions.csv", row.names = FALSE)
 
-#refer to datawrapper chart in memo
+#refer to datawrapper chart: https://www.datawrapper.de/_/m14FV/
 ```
 
+## Bonus-ish Q5 add-on: Is this decrease sufficient? What does it mean?
+
+```{r}
+#load 2010 data, reference point
+
+ghg_data_2010 <- read_excel("data/flight.xls", sheet = 14) |> clean_names()
+```
+
+```{r}
+#simplify data
+
+total_emissions_2010 <- ghg_data_2010 |>
+  group_by(reporting_year) |> 
+  summarise(
+    total_mtco2e = sum(ghg_quantity_metric_tons_co2e, na.rm = TRUE),
+    n_facilities = n(),
+  )
+
+total_emissions_2010 <- total_emissions_2010 |>
+  mutate(avg_mtco2e_per_facility = total_mtco2e / n_facilities)
+```
+
+```{r}
+#join with 2023 data, before and after
+
+change_in_total_emissions <- bind_rows(list(total_emissions_2010, total_emissions_2023))
+
+#transpose it bc its dumb and u cant pct change
+  
+transposed_change <- as.data.frame(t(change_in_total_emissions[, -1]))
+
+colnames(transposed_change) <- change_in_total_emissions[[1]]
+
+pct_change_emissions <- transposed_change %>% 
+  mutate(pct_change = (`2023` - `2010`)/`2010` * 100)
+
+#total emissions have decreased by 20% since 2010. if we keep at this rate, we would decrease emissions by 40% by 2033.
+```
+
+```{r}
+#total emissions in 2010 multiplied by paris agreement decrease
+3196571790 * 0.57
+
+#projected emissions for 2030
+#expected rate of decrease following 2023 multiplied by total emissions in 2023
+0.892 * 2578282380
+ 
+#create reference dataframe for chart
+
+decade_total_emissions_basis <- decade_total_emissions %>% 
+  mutate(expected = 2299827883, baseline = 1822045920)
+
+write.csv(decade_total_emissions_basis, file = "decade_total_emissions_basis.csv", row.names = FALSE)
+```
 
