@@ -26,7 +26,7 @@ library(ggthemes)
 library(tidycensus)
 library(tigris)
 
-census_api_key("6d86563cdb0be9ee2ba28220eab5e492cb7d0c3d", install=TRUE, overwrite = TRUE)
+census_api_key("ad35d0eb0319f0f5b3d93fc442422e7b34e70f9b", install=TRUE, overwrite = TRUE)
 
 ```
 
@@ -38,47 +38,67 @@ Let's explore Maryland elections, power outages and electric vehicle data and ma
 
 Get the geometry for Maryland's counties using tigris and, joining that dataframe to your results dataframe, make a county-level map of the differences between Moore and Brown's percentages. What is the story here, and what is the county with the most interesting results?
 
-**A1.**
+**A1.The story here is that Prince George's County and Baltimore City voters were very consistent in their support for Wes Moore and Anthony Brown. Alternatively, some more rural counties has significant discrepancies in the consistency between votes for the two candidates.**
 
 ```{r}
 #loading, mutating and sorting the governor votes data
-md_statewide_county <- read.csv("data/md_statewide_county.csv")
+md_statewide_county <- read.csv("data/md_statewide_county.csv") %>% 
+  clean_names()
 
 md_statewide_county <- md_statewide_county %>% 
-  mutate(gov_totals = Cox +  Moore + Lashar + Wallace + Harding + Sefcik + GovWritein, ag_totals = Peroutka + Brown + AgWritein)
+  mutate(
+    gov_totals = cox +  moore + lashar + wallace + harding + sefcik + gov_writein, 
+    ag_totals = peroutka + brown + ag_writein,
+    gov_pct_moore = moore/gov_totals*100, 
+    ag_pct_brown = brown/ag_totals*100,
+    pct_difference = gov_pct_moore - ag_pct_brown
+    )
 
 md_statewide_county <- md_statewide_county %>% 
-  mutate(gov_pct_moore = Moore/gov_totals*100, ag_pct_brown = Brown/ag_totals*100)
+  mutate(geoid = as.character(geoid))
 
-md_statewide_county <- md_statewide_county %>% 
-  mutate(pct_differences_pct_pt = gov_pct_moore - ag_pct_brown)
-```
-
-```{r}
 #loading and joining the county data
 md_counties <- counties() %>% 
-  filter(STATEFP==24)
+  filter(STATEFP==24) %>% 
+  clean_names()
 
-md_statewide_county <- md_statewide_county |> mutate(across(GEOID, as.character))
-
-md_statewide_county_with_counties <- md_statewide_county %>% full_join(md_counties, join_by(GEOID))
+md_statewide_map_data <- md_counties %>% 
+  inner_join(md_statewide_county, by = 'geoid')
 ```
 
 ```{r}
 #creating the map
-ggplot() +
-  geom_sf(data=md_statewide_county_with_counties, aes(fill = pct_differences_pct_pt)) +
-  scale_fill_viridis_b(option="magma") +
-  theme_solarized_2()
-```
 
+ggplot() +
+  geom_sf(data=md_statewide_map_data, aes(fill = pct_difference)) +
+  scale_fill_viridis_c(option="magma") +
+  theme_solarized()
+```
 
 
 **Q2.** Make a county-level map to explore the number of customers impacted by power outages in Maryland from last March. Load the `county_outages_march2023.csv` file in the data folder and calculate a rate of customers with outages per 10,000 total customers for each county. Then join that dataframe to your Maryland counties dataframe you made in Q1 and create a county-level map of the results; you may need to tweak the fill scale to make the distinctions clearer. What's the potential story here? Given access to other months' outage data, what would your next steps be in reporting a story?
 
-**A2.**
+**A2. Prince George's County had the most power outages per 10,000 people by far. it was followed by some of Maryland's more urban and suburban counties. This makes. I would look to see is this is a historical pattern or if there were just some weather discrepancies. I would also look to see if this is a demographic pattern in other states, considering PG County's demographic makeup.**
 
 ```{r}
+county_outages <- read_csv("data/county_outages_march2023.csv")
+
+county_outages_per_10000 <- county_outages %>%  
+  mutate (
+    outages_per_10000 = outage_customers/10000
+  )
+
+md_counties <- counties %>% 
+  filter(STATEFP == '24') %>% 
+  clean_names()
+
+md_statewide_map_data1 <- md_counties %>%
+  inner_join(county_outages_per_10000, by = c("name" = "county"))
+
+ggplot() +
+  geom_sf(data = md_statewide_map_data1, aes(fill=outages_per_10000)) +
+  scale_fill_viridis_b(option='magma') +
+  theme_solarized()
 ```
 
 **Q3.** You've been assigned a story about the use of electric vehicles in Maryland and you want to make a map of the prevalence of electric vehicles in each county. Load the `ev_2020_2023.csv` file, which has the number of electric and hybrid vehicles per county from July 2020 and March 2023 and calculate a percentage change for each county (remember, that's `new-old/old`). Using the Maryland counties dataframe you made for Q1, make a county map showing the percentage change. What counties stand out to you? What questions do you have about the changes you're seeing?
@@ -89,7 +109,34 @@ Then, calculate a per capita rate of electric & hybrid vehicles using the March 
 
 Finally, make a second county map showing the per capita rate. What counties stand out on this map? How is it different from the first one you made?
 
-**A3.**
+**A3. Caroline County stands out because it proportionately has the largest jump in electric vehicle registration. I'm wondering whether they implemented some sort of tax break on electric vehicles, which is something we have in New York. NOTE: I couldn't get the second map up because my API key wasn't working. I created like three new ones, and it literally just wouldn't work.**
 
 ```{r}
+elec_vehicles <- read_csv("data/ev_2020_2023.csv") %>% 
+  clean_names()
+
+elec_vehicles <- elec_vehicles %>%  
+  mutate (
+    pct_change = (march_2023-july_2020)/july_2020
+  )
+
+md_counties <- counties %>% 
+  filter(STATEFP == '24') %>% 
+  clean_names()
+
+md_statewide_map_data2 <- md_counties %>%  inner_join(elec_vehicles, by = c("name" = "county"))
+
+ggplot() +
+  geom_sf(data = md_statewide_map_data2, aes(fill=pct_change)) +
+  scale_fill_viridis_b(option='magma') +
+  theme_solarized()
+
+md_county_pop <- get_acs(geography = "county",
+              variables = c(population = "B01001_001"),
+              year = 2021,
+              state = "MD",
+              geometry = TRUE)
+
+md_elec_vehicles <- md_county_population %>% 
+  left_join(elec_vehicles, by = c("name" = "county"))
 ```
