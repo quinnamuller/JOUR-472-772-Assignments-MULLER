@@ -244,7 +244,7 @@ tags. What does the output suggest about how many
 
 <ul>
 
-tags there are in the HTML source? **Answer**
+tags there are in the HTML source? **Answer: It seems like there are 96 <ul> tags..?**
 
 ```{r}
 osp_results |> html_elements('li')
@@ -266,7 +266,7 @@ tags. To do that, we add `html_text()` to the end of the last code block:
 
 <li>
 
-tags. Describe the output: **Answer**
+tags. Describe the output: **Answer: For the most part, the output consists of the entries in the table, but it also includes all of the text from the navigation and social media tabs that I would normally assume are <div> tags or part of some Foundation code.**
 
 ```{r}
 osp_results |> html_elements('li') |> html_text()
@@ -274,13 +274,13 @@ osp_results |> html_elements('li') |> html_text()
 
 Ok, so now we can see the press releases. But they are surrounded by a bunch of things we don't want, and this *still* isn't a dataframe. Let's solve the second problem first with the `as_tibble()` function:
 
-\### Task 11: Turn the contents of the
+/### Task 11: Turn the contents of the
 
 <li>
 
 tags into a dataframe
 
-**Task** Run the following code in the gray-colored codeblock below to make a dataframe. Describe the output: **Answer**
+**Task** Run the following code in the gray-colored codeblock below to make a dataframe. Describe the output: **Answer: This created a table of all of the text entries from the previous output.**
 
 ```{r}
 releases <- osp_results |> html_elements('li') |> html_text() |> as_tibble()
@@ -292,7 +292,7 @@ Now we're getting closer. The press releases have a specific HTML class tied to 
 
 tag - in this case "listing-item". We can isolate those:
 
-\### Task 12: Isolate just the
+/### Task 12: Isolate just the
 
 <li class="listing-item">
 
