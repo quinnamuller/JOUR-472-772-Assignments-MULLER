@@ -278,7 +278,9 @@ Another popular use of text analysis is to measure the sentiment of a word - whe
 
 ### Task 14: Load the bing lexicon and produce sentiments for our 2021-2023 unique words
 
-**Task** Run the following code and describe the results. Do any of the sentiments seem incorrect or counter-intuitive? **Answer: Yes. I think that the word patient, medically, is not really positive, but the word patient as an adjective is. The word right is also probably referring not to right vs left or right vs wrong but refers to someones rights, which is probably neutral. Also, contextually, these are probably all not very positive situations.**
+**Task** Run the following code and describe the results. Do any of the sentiments seem incorrect or counter-intuitive? 
+
+**Answer: Yes. I think that the word patient, medically, is not really positive, but the word patient as an adjective is. The word right is also probably referring not to right vs left or right vs wrong but refers to someones rights, which is probably neutral. Also, contextually, these are probably all not very positive situations.**
 
 ```{r}
 bing <- get_sentiments("bing")
