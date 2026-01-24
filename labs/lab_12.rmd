@@ -1,0 +1,114 @@
+---
+title: "lab_12"
+author: "Derek Willis"
+date: "2025-01-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## You will need
+
+-   tidytext and our usual libraries
+
+## Load libraries and establish settings
+
+**Task** Create a codeblock and load appropriate packages and settings for this lab.
+
+```{r}
+library(tidyverse)
+library(tidytext)
+library(janitor)
+library(lubridate)
+library(rvest)
+```
+
+## Questions
+
+**Q1.** You've been assigned to report a story about the leading reasons that Maryland attorneys get sanctioned by the state for misconduct. The state [publishes lists of sanctions](https://www.courts.state.md.us/attygrievance/sanctions) that contain a short text description about the situation. Load the CSV file in the data folder containing records from fiscal year 2011 onwards. Make a list of unique words from the text column, then following the example in the pre_lab, remove common "stop words" from that list and create a list of the top 10 words containing the percentage of occurrences each word represents. What's the leading word in that answer and, broadly, what do you think the top 10 words describe?
+
+**A1. Failing was the leading word. The top 10 words describe lawyers who were disbarred or maybe engaged in some sort of corruption.**
+
+```{r}
+md_attorney_sanctions <- read_csv("data/md_attorney_sanctions.csv")
+
+unique_words <- md_attorney_sanctions %>% 
+  select(text) %>% 
+  unnest_tokens(word, text)
+
+unique_words %>%
+  count(word, sort = TRUE) %>%
+  top_n(50) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(x = word, y = n)) +
+  geom_col() +
+  xlab(NULL) +
+  coord_flip() +
+      labs(x = "Count",
+      y = "Unique words",
+      title = "Count of unique words")
+
+unique_words %>% 
+  count(word, sort = TRUE) %>% 
+  mutate(word = reorder(word, n))
+data("stop_words")
+
+stop_words <- stop_words %>% 
+  add_row(word = "client") %>% 
+  add_row(word = "clients") %>% 
+  add_row(word = "respondent") %>% 
+  add_row(word = "attorney") %>% 
+  add_row(word = "account") %>% 
+  add_row(word = "case") %>% 
+  add_row(word = "bar") %>% 
+  add_row(word = "engaging") %>% 
+  add_row(word = "counsel") %>%  
+  add_row(word = "representation") %>% 
+  add_row(word = "court") %>%  
+  add_row(word = "client's") %>%  
+  add_row(word = "represent")
+    
+unique_words %>%
+  anti_join(stop_words) %>%
+  group_by(word) %>%
+  tally(sort=TRUE) %>% 
+  mutate(percent = (n/sum(n))*100) %>%
+  top_n(50)
+```
+
+**Q2.** Let's move beyond single words to phrases. Make a list of the top 10 three-word phrases, called trigrams, based on the example from the pre_lab (you'll need to modify the example code to do this). What's the top trigram and how often does it appear? What does that phrase mean in legal terms?
+
+**A2. Two of the entries are tied with 181 instances: "conduct involving dishonesty" and "dishonesty fraud deceit." Both of these make it seem like all of these cases are of dishonest lawyers who maybe fudged facts to win a case.**
+
+```{r}
+top_10_trigram <- md_attorney_sanctions %>% 
+  unnest_tokens(trigram, text, token = "ngrams", n = 3) %>% 
+  separate(trigram, c("word1", "word2", "word3"), sep = " ") %>% 
+  filter(!word1 %in% stop_words$word) %>% 
+  filter(!word2 %in% stop_words$word) %>% 
+  filter(!word3 %in% stop_words$word) %>% 
+  mutate(trigram = paste(word1, word2, word3, sep=" ")) %>% 
+  group_by(trigram) %>% 
+  tally() %>% 
+  top_n(10)
+```
+
+**Q3.** Let's drop back down to more traditional text analysis - take the top trigram from Q2 and write code to see how many times it occurs in the text column in each fiscal year. What do you think the answer produced by your code suggests? What else could you do to try and clarify the most important reasons attorneys get sanctioned?
+
+**A3. It suggests that a lot of lawyers got caught being dishonest in 2021 or maybe 2020 depending on timing. I wonder if this is related to policy enacted under Biden or Moore. I would have to do research to see those explanations.**
+
+```{r}
+top_10_trigram <- "conduct involving dishonesty"
+
+trigram_by_year <- md_attorney_sanctions %>%  
+  group_by(fiscal_year) %>%  
+  summarise(
+    conduct_dishonesty = sum(str_detect(text, fixed(top_10_trigram))),
+    .groups = "drop"
+  ) %>%  
+  arrange(fiscal_year)
+
+trigram_by_year
+```
